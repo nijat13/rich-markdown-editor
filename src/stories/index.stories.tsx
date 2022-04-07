@@ -1,8 +1,8 @@
-import Editor from "./index";
+import { Meta, Story } from "@storybook/react/types-6-0";
 import debounce from "lodash/debounce";
-import { Props } from "..";
 import React from "react";
-import { Story, Meta } from "@storybook/react/types-6-0";
+import { Props } from "..";
+import Editor from "./index";
 
 export default {
   title: "Editor",
@@ -25,7 +25,7 @@ export default {
   },
 } as Meta;
 
-const Template: Story<Props> = args => <Editor {...args} />;
+const Template: Story<Props> = (args) => <Editor {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {
@@ -189,7 +189,7 @@ Persisted.args = {
     `# Persisted
   
 The contents of this editor are persisted to local storage on change (edit and reload)`,
-  onChange: debounce(value => {
+  onChange: debounce((value) => {
     const text = value();
     localStorage.setItem("saved", text);
   }, 250),
@@ -201,11 +201,12 @@ Placeholder.args = {
   placeholder: "This is a custom placeholder…",
 };
 
-export const Images = Template.bind({});
-Images.args = {
-  defaultValue: `# Images
-![A caption](https://upload.wikimedia.org/wikipedia/commons/0/06/Davide-ragusa-gcDwzUGuUoI-unsplash.jpg?=243x295)`,
-  onChange: fn => {
+export const Media = Template.bind({});
+Media.args = {
+  defaultValue: `# Media
+![Photo caption](https://upload.wikimedia.org/wikipedia/commons/0/06/Davide-ragusa-gcDwzUGuUoI-unsplash.jpg?=243x295)
+![Video caption](https://ak.picdn.net/shutterstock/videos/1044255715/preview/stock-footage-person-signing-important-document-camera-following-tip-of-the-pen-as-it-signs-crucial-business.webm?=243x295)`,
+  onChange: (fn) => {
     console.log("VALUE: ", fn());
   },
 };

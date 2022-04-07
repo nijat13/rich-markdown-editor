@@ -1,24 +1,26 @@
 import uploadPlaceholderPlugin, {
   findPlaceholder,
 } from "../lib/uploadPlaceholder";
+import isVideo from "../queries/isVideo";
 import { ToastType } from "../types";
 
 const insertFiles = function(view, event, pos, files, options) {
   // filter to only include image files
-  const images = files.filter(file => /image/i.test(file.type));
-  if (images.length === 0) return;
+  const images = files.filter((file) => /image/i.test(file.type));
+  const videos = files.filter((file) => /video/i.test(file.type));
+  if (images.length === 0 && videos.length === 0) return;
 
   const {
     dictionary,
-    uploadImage,
+    uploadMedia,
     onImageUploadStart,
     onImageUploadStop,
     onShowToast,
   } = options;
 
-  if (!uploadImage) {
+  if (!uploadMedia) {
     console.warn(
-      "uploadImage callback must be defined to handle image uploads."
+      "uploadMedia callback must be defined to handle image uploads."
     );
     return;
   }
@@ -35,13 +37,13 @@ const insertFiles = function(view, event, pos, files, options) {
   // we'll use this to track of how many images have succeeded or failed
   let complete = 0;
 
+  const validFile = !!videos.length ? videos : images;
   // the user might have dropped multiple images at once, we need to loop
-  for (const file of images) {
+  for (const file of validFile) {
     // Use an object to act as the ID for this upload, clever.
     const id = {};
 
     const { tr } = view.state;
-
     // insert a placeholder at this position
     tr.setMeta(uploadPlaceholderPlugin, {
       add: { id, file, pos },
@@ -51,13 +53,17 @@ const insertFiles = function(view, event, pos, files, options) {
     // start uploading the image file to the server. Using "then" syntax
     // to allow all placeholders to be entered at once with the uploads
     // happening in the background in parallel.
-    uploadImage(file)
-      .then(src => {
+    uploadMedia(file)
+      .then((src) => {
+        const isFileVideo = isVideo(src);
+
         // otherwise, insert it at the placeholder's position, and remove
         // the placeholder itself
-        const newImg = new Image();
+        const newFile = isFileVideo
+          ? document.createElement("video")
+          : new Image();
 
-        newImg.onload = () => {
+        const initFileLoad = () => {
           const pos = findPlaceholder(view.state, id);
 
           // if the content around the placeholder has been deleted
@@ -71,13 +77,24 @@ const insertFiles = function(view, event, pos, files, options) {
           view.dispatch(transaction);
         };
 
-        newImg.onerror = error => {
-          throw error;
-        };
+        // If uploaded file is Video
+        if (isFileVideo) {
+          initFileLoad();
+          newFile.setAttribute("src", src);
+          newFile.setAttribute("controls", "controls");
+        }
+        // If uploaded file is Image
+        else {
+          newFile.onload = initFileLoad;
 
-        newImg.src = src;
+          newFile.onerror = (error) => {
+            throw error;
+          };
+
+          newFile.src = src;
+        }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error);
 
         // cleanup the placeholder if there is a failure
@@ -88,7 +105,7 @@ const insertFiles = function(view, event, pos, files, options) {
 
         // let the user know
         if (onShowToast) {
-          onShowToast(dictionary.imageUploadError, ToastType.Error);
+          onShowToast(dictionary.mediaUploadError, ToastType.Error);
         }
       })
       // eslint-disable-next-line no-loop-func

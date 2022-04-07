@@ -1,26 +1,26 @@
+import some from "lodash/some";
+import { TextSelection } from "prosemirror-state";
+import { EditorView } from "prosemirror-view";
 import * as React from "react";
 import { Portal } from "react-portal";
-import some from "lodash/some";
-import { EditorView } from "prosemirror-view";
-import { TextSelection } from "prosemirror-state";
-import getTableColMenuItems from "../menus/tableCol";
-import getTableRowMenuItems from "../menus/tableRow";
-import getTableMenuItems from "../menus/table";
+import createAndInsertLink from "../commands/createAndInsertLink";
+import baseDictionary from "../dictionary";
+import filterExcessSeparators from "../lib/filterExcessSeparators";
+import getDividerMenuItems from "../menus/divider";
 import getFormattingMenuItems from "../menus/formatting";
 import getImageMenuItems from "../menus/image";
-import getDividerMenuItems from "../menus/divider";
+import getTableMenuItems from "../menus/table";
+import getTableColMenuItems from "../menus/tableCol";
+import getTableRowMenuItems from "../menus/tableRow";
+import getColumnIndex from "../queries/getColumnIndex";
+import getMarkRange from "../queries/getMarkRange";
+import getRowIndex from "../queries/getRowIndex";
+import isMarkActive from "../queries/isMarkActive";
+import isNodeActive from "../queries/isNodeActive";
+import { MenuItem } from "../types";
 import FloatingToolbar from "./FloatingToolbar";
 import LinkEditor, { SearchResult } from "./LinkEditor";
 import ToolbarMenu from "./ToolbarMenu";
-import filterExcessSeparators from "../lib/filterExcessSeparators";
-import isMarkActive from "../queries/isMarkActive";
-import getMarkRange from "../queries/getMarkRange";
-import isNodeActive from "../queries/isNodeActive";
-import getColumnIndex from "../queries/getColumnIndex";
-import getRowIndex from "../queries/getRowIndex";
-import createAndInsertLink from "../commands/createAndInsertLink";
-import { MenuItem } from "../types";
-import baseDictionary from "../dictionary";
 
 type Props = {
   dictionary: typeof baseDictionary;
@@ -47,6 +47,9 @@ function isVisible(props) {
     return true;
   }
   if (selection.node && selection.node.type.name === "image") {
+    return true;
+  }
+  if (selection.node && selection.node.type.name === "video") {
     return true;
   }
   if (selection.node) return false;
@@ -179,6 +182,8 @@ export default class SelectionToolbar extends React.Component<Props> {
     const range = getMarkRange(selection.$from, state.schema.marks.link);
     const isImageSelection =
       selection.node && selection.node.type.name === "image";
+    const isVideoSelection =
+      selection.node && selection.node.type.name === "video";
     let isTextSelection = false;
 
     let items: MenuItem[] = [];
@@ -190,6 +195,8 @@ export default class SelectionToolbar extends React.Component<Props> {
       items = getTableRowMenuItems(state, rowIndex, dictionary);
     } else if (isImageSelection) {
       items = getImageMenuItems(state, dictionary);
+    } else if (isVideoSelection) {
+      items = getVideoMenuItems(state, dictionary);
     } else if (isDividerSelection) {
       items = getDividerMenuItems(state, dictionary);
     } else {

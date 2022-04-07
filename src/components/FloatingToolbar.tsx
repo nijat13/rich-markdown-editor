@@ -1,10 +1,11 @@
+import { EditorView } from "prosemirror-view";
 import * as React from "react";
 import { Portal } from "react-portal";
-import { EditorView } from "prosemirror-view";
+import styled from "styled-components";
 import useComponentSize from "../hooks/useComponentSize";
 import useMediaQuery from "../hooks/useMediaQuery";
 import useViewportHeight from "../hooks/useViewportHeight";
-import styled from "styled-components";
+import isVideo from "../queries/isVideo";
 
 const SSR = typeof window === "undefined";
 
@@ -88,7 +89,9 @@ function usePosition({ menuRef, isSelectingText, props }) {
 
     // Images are wrapped which impacts positioning - need to traverse through
     // p > span > div.image
-    const imageElement = element.getElementsByTagName("img")[0];
+    const imageElement = !isVideo(selection.node.attrs.src)
+      ? element.getElementsByTagName("img")[0]
+      : element.getElementsByTagName("video")[0];
     const { left, top, width } = imageElement.getBoundingClientRect();
 
     return {
@@ -185,9 +188,9 @@ const Wrapper = styled.div<{
   will-change: opacity, transform;
   padding: 8px 16px;
   position: absolute;
-  z-index: ${props => props.theme.zIndex + 100};
+  z-index: ${(props) => props.theme.zIndex + 100};
   opacity: 0;
-  background-color: ${props => props.theme.toolbarBackground};
+  background-color: ${(props) => props.theme.toolbarBackground};
   border-radius: 4px;
   transform: scale(0.95);
   transition: opacity 150ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
@@ -205,12 +208,12 @@ const Wrapper = styled.div<{
     width: 24px;
     height: 24px;
     transform: translateX(-50%) rotate(45deg);
-    background: ${props => props.theme.toolbarBackground};
+    background: ${(props) => props.theme.toolbarBackground};
     border-radius: 3px;
     z-index: -1;
     position: absolute;
     bottom: -2px;
-    left: calc(50% - ${props => props.offset || 0}px);
+    left: calc(50% - ${(props) => props.offset || 0}px);
     pointer-events: none;
   }
 
